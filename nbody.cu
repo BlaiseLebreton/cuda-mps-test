@@ -1,9 +1,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "timer.h"
 
-#define SHMOO 1
 #define BLOCK_SIZE 256
 #define SOFTENING 1e-9f
 
@@ -39,12 +39,13 @@ void bodyForce(Body *p, float dt, int n) {
 int main(const int argc, const char** argv) {
 
   int nBodies  = 150000;
-  int priority = 0;
+  int priority = 0, sleep = 0, nIters = 10;
   if (argc > 1) nBodies  = atoi(argv[1]);
-  if (argc > 2) priority = atoi(argv[2]);
+  if (argc > 2) nIters   = atoi(argv[2]);
+  if (argc > 3) sleep    = atoi(argv[3]);
+  if (argc > 4) priority = atoi(argv[4]);
 
   const float dt = 0.01f; // time step
-  const int nIters = 20;  // simulation iterations
 
   int bytes = nBodies*sizeof(Body);
   float *buf = (float*)malloc(bytes);
@@ -79,12 +80,13 @@ int main(const int argc, const char** argv) {
     if (iter > 1) { // First iter is warm up
       totalTime += tElapsed;
     }
+    usleep(sleep*1000);
     // printf("Iteration %d: %.3f seconds\n", iter, tElapsed);
   }
   double avgTime = totalTime / (double)(nIters-1);
 
   // printf("%d, %0.3f\n", nBodies, 1e-9 * nBodies * nBodies / avgTime);
-  printf("%d Bodies: average %0.3f Billion Interactions / second\n", nBodies, 1e-9 * nBodies * nBodies / avgTime);
+  printf("\x1B[32m %0.3f \x1B[0m Billion Interactions / second\n",  1e-9 * nBodies * nBodies / avgTime);
   free(buf);
   cudaFree(d_buf);
   cudaStreamDestroy(stream1);
